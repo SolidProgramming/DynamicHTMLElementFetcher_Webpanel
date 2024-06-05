@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="DynamicHTMLElementFetcher_Webpanel.styles.css" />
+
+    @((MarkupString)HxSetup.RenderBootstrapCssReference())
+
+    <!-- Default values for additional CSS Variables (+ import Bootstrap Icons) -->
+    <link href="_content/Havit.Blazor.Components.Web.Bootstrap/defaults.css" rel="stylesheet" />
+
+    <!-- Blazor CSS Isolation -->
+    <link href="Your.Blazor.Project.Assembly.Name.styles.css" rel="stylesheet" />
+
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <!-- JavaScript Bundle with Popper -->
+    @((MarkupString)HxSetup.RenderBootstrapJavaScriptReference())
+    <script src="_framework/blazor.web.js"></script>
+</body>
+
+</html>

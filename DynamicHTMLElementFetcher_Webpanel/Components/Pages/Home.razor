@@ -1,0 +1,136 @@
+﻿@page "/"
+
+
+<PageTitle>Home</PageTitle>
+
+<div class="container">    
+    <div class="row mt-5 justify-content-center">        
+        <div class="col-4 p-0 ps-1">
+            <HxInputText Enabled="!ShowQueryInput" @bind-Value="Url" Placeholder="https://lawtracker.de/">https://lawtracker.de/</HxInputText>
+        </div>
+        <div class="col-2 p-0 ps-2 pe-2">
+            <HxButton CssClass="w-100" Enabled="!ShowQueryInput" OnClick="GetPageContent" Spinner="Loading" Color="ThemeColor.Success" Icon="@(ShowQueryInput ? BootstrapIcon.Check : BootstrapIcon.Search)">@(ShowQueryInput ? "OK" : "Abrufen")</HxButton>
+        </div>       
+    </div>    
+    <div class="row justify-content-center">
+        @if (ShowQueryInput)
+        {
+            <div class="row text-center my-3">
+                <h1 class="text-success">
+                    <HxIcon Icon="BootstrapIcon.ArrowDown"></HxIcon>
+                </h1>
+            </div>
+            <div class="col-4 p-0 ps-1">
+                <HxInputText @bind-Value="Query" Placeholder="@("//a[@id='mybutton']")"></HxInputText>
+            </div>
+            <div class="col-2 p-0 ps-2 pe-2">
+                <HxButton OnClick="GetQueryElement" CssClass="w-100" Spinner="LoadingQueryElement" Color="ThemeColor.Success" Icon="BootstrapIcon.Search">Element suchen</HxButton>
+            </div>
+        }
+    </div>
+    <div class="row justify-content-center text-center">
+        @if (ShowQueryOutput)
+        {
+            <div class="row text-center my-3">
+                <h1 class="text-success">
+                    <HxIcon Icon="BootstrapIcon.ArrowDown"></HxIcon>
+                </h1>
+            </div>
+            <div>
+                @foreach (string stylesheet in PageStyleSheetLinks)
+                {
+                    @((MarkupString)@stylesheet)
+                }
+                @((MarkupString)@QueryElement)
+                </div>            
+        }
+    </div>
+    <div class="mt-5 text-center">
+        <HxButton Enabled="@(!Loading && !LoadingQueryElement)" OnClick="Reset" Color="ThemeColor.Warning" Icon="BootstrapIcon.ArrowClockwise" CssClass="w-50">Reset</HxButton>
+    </div>   
+</div>
+
+@code {
+    private string? Url { get; set; }
+    private string? Query { get; set; }
+
+    private bool Loading { get; set; }
+    private bool LoadingQueryElement { get; set; }
+
+    private bool ShowQueryInput { get; set; }
+    private bool ShowQueryOutput { get; set; }
+
+    private string? PageContent { get; set; }
+    private string? QueryElement { get; set; }
+
+    private List<string>? PageStyleSheetLinks = [];
+
+    private async Task GetPageContent()
+    {
+        if (string.IsNullOrEmpty(Url))
+            return;
+
+        ShowQueryInput = false;
+
+        Loading = true;
+
+        using HttpClient httpClient = new();
+
+        PageContent = await httpClient.GetStringAsync(Url);
+
+        GetPageStylesheets();
+
+        Loading = false;
+        ShowQueryInput = true;
+    }
+
+    private void GetPageStylesheets()
+    {
+        HtmlDocument document = new();
+        document.LoadHtml(PageContent);
+
+        List<HtmlNode> elements = new HtmlNodeQueryBuilder()
+            .Query(document)
+                .GetNodesByQuery("//link[@rel='stylesheet']");
+
+        foreach (HtmlNode node in elements)
+        {
+            PageStyleSheetLinks.Add(node.OuterHtml);
+        }
+    }
+
+    private void GetQueryElement()
+    {
+        if (string.IsNullOrEmpty(Query))
+            return;
+
+        ShowQueryOutput = false;
+        LoadingQueryElement = true;
+
+        HtmlDocument document = new();
+        document.LoadHtml(PageContent);
+
+        HtmlNode? element = new HtmlNodeQueryBuilder()
+            .Query(document)
+                .GetNodesByQuery(Query)
+                    .FirstOrDefault();
+
+        if (element is not null)
+        {
+            QueryElement = element.OuterHtml;
+        }
+
+        ShowQueryOutput = true;
+        LoadingQueryElement = false;
+    }
+
+    private void Reset()
+    {
+        Url = "https://lawtracker.de/";
+        ShowQueryInput = false;
+        PageContent = "";
+        QueryElement = "";
+        PageStyleSheetLinks.Clear();
+    }
+
+}
